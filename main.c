@@ -3,7 +3,8 @@
 
     Piezo wired between PB0 and GND.
 
-    Shorting PB2 and GND will make Piezo beep.
+    Shorting GND and PB2 will make Piezo beep.
+    Shorting GND and PB1 will make Piezo beep one fifth higher.
     Piezo waveform is controlled by Timer 0, and
     it is gated on or off using the DDRB register.
 
@@ -52,19 +53,27 @@ int
 main(void) {
   unsigned char i;
 
-  BIT_SET(PORTB, 2); /* pull-up */
+  /* pull-ups */
+  BIT_SET(PORTB, 1);
+  BIT_SET(PORTB, 2);
 
   /* [ATtinyDS] 11.9 refers */
   /* CTC, Toggle ouput. */
   TCCR0A = 0x42;
-  /* (61 + 1) * prescale * 2 = 7936 clocks per period
-   * which is 1008Hz at a clock of 8MHz. */
-  OCR0A = 61;
   /* Set T0 clock to flck/64 */
   TCCR0B = 0x3;
 
   while(1) {
     if(!BIT_GET(PINB, 2)) {
+      /* (59 + 1) * prescale * 2 = 7680 clocks per period
+       * which is 1042Hz at a clock of 8MHz (musical note C6). */
+      OCR0A = 59;
+      /* OC0A */
+      BIT_SET(DDRB, 0);
+      delay(5);
+    } else if(!BIT_GET(PINB, 1)) {
+      /* 1562Hz G6 */
+      OCR0A = 40;
       /* OC0A */
       BIT_SET(DDRB, 0);
       delay(5);
